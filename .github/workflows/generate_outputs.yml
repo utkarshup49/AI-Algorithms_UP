@@ -27,12 +27,20 @@ jobs:
         run: |
           git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki
 
-      - name: Update Wiki Page
+      - name: Update Wiki Pages
         run: |
-          cp OUTPUTS.md wiki/Script-Outputs.md
+          cd wiki
+
+          rm -f *.md
+
+          cd ..
+
+          cp wiki_outputs/*.md wiki/
+
           cd wiki
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+
           git add .
           git commit -m "Update outputs for tag ${{ github.ref_name }}" || echo "No changes"
           git push
