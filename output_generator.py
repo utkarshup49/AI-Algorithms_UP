@@ -1,4 +1,5 @@
 import subprocess
+from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -39,8 +40,9 @@ def run_script(path: Path):
 
     return None
 
-
 ret = ["# Script Outputs\n\n"]
+
+groups = defaultdict(list)
 
 for file in sorted(ROOT.rglob("*")):
     if file.suffix not in SUPPORTED_EXTENSIONS:
@@ -49,33 +51,38 @@ for file in sorted(ROOT.rglob("*")):
     if file.name == "output_generator.py" or is_excluded(file):
         continue
 
-    rel = file.relative_to(ROOT)
-    ret.append(f"## `{rel}`\n\n")
+    parent = file.parent.relative_to(ROOT)
+    groups[parent].append(file)
 
-    # Source Code
-    ret.append("### Source Code\n\n```")
-    ret.append("python\n" if file.suffix == ".py" else "prolog\n")
+for parent in sorted(groups):
+    ret.append(f"# `{parent if str(parent).strip() != '.' else 'ROOT'}`\n\n")
 
-    try:
-        ret.append(file.read_text())
-    except Exception as e:
-        ret.append(f"[ERROR reading file] {e}\n")
+    for file in groups[parent]:
+        rel = file.relative_to(ROOT)
+        ret.append(f"## `{rel.name}`\n\n")
 
-    ret.append("\n```\n\n")
+        ret.append("### Source Code\n\n```")
+        ret.append("python\n" if file.suffix == ".py" else "prolog\n")
 
-    # Output
-    ret.append("### Output\n\n```text\n")
+        try:
+            ret.append(file.read_text())
+        except Exception as e:
+            ret.append(f"[ERROR reading file] {e}\n")
 
-    try:
-        r = run_script(file)
-        if r:
-            ret.append(r.stdout or "")
-            ret.append(r.stderr or "")
-            ret.append(f"\n[Exit Code: {r.returncode}]\n")
-    except Exception as e:
-        ret.append(f"[ERROR executing] {e}\n")
+        ret.append("\n```\n\n")
 
-    ret.append("\n```\n\n")
+        ret.append("### Output\n\n```text\n")
+
+        try:
+            r = run_script(file)
+            if r:
+                ret.append(r.stdout or "")
+                ret.append(r.stderr or "")
+                ret.append(f"\n[Exit Code: {r.returncode}]\n")
+        except Exception as e:
+            ret.append(f"[ERROR executing] {e}\n")
+
+        ret.append("\n```\n\n")
 
 with open(OUT, "w") as f:
     f.writelines(ret)
