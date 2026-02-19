@@ -11,16 +11,22 @@ arith(X, Y) :-
 
 add(X, Y) :-
     R is X + Y,
-    write('R is '), write(R), nl.
+    write('Add: '), writeln(R).
 
 subt(X, Y) :-
     R is X - Y,
-    write('R is '), write(R), nl.
+    write('Sub: '), writeln(R).
 
 mult(X, Y) :-
     R is X * Y,
-    write('R is '), write(R), nl.
+    write('Mul: '), writeln(R).
 
 div(X, Y) :-
+    Y =\= 0,
     R is X / Y,
-    write('R is '), write(R), nl.
+    write('Div: '), writeln(R).
+
+main :-
+    X = 10,
+    Y = 5,
+    arith(X, Y).
