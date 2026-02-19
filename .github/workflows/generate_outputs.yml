@@ -1,4 +1,4 @@
-name: Generate Outputs On Tag
+name: Generate Wiki On Tag
 
 on:
   push:
@@ -8,12 +8,11 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout main repo
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -21,24 +20,19 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-
       - name: Run output generator
-        run: |
-          python output_generator.py
+        run: python output_generator.py
 
-      - name: Commit generated OUTPUTS.md
+      - name: Clone Wiki
         run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki
+
+      - name: Update Wiki Page
+        run: |
+          cp OUTPUTS.md wiki/Script-Outputs.md
+          cd wiki
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git checkout master
-          git pull origin master
-          git add OUTPUTS.md
-          git commit -m "Auto-generate OUTPUTS.md for tag ${{ github.ref_name }}" || echo "No changes"
-          git push origin master
-
-      - name: Push changes
-        run: |
+          git add .
+          git commit -m "Update outputs for tag ${{ github.ref_name }}" || echo "No changes"
           git push
