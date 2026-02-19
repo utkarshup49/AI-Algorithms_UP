@@ -23,8 +23,19 @@ for py in sorted(ROOT.rglob("*.py")):
         continue
 
     rel = py.relative_to(ROOT)
-    ret.append(f"## `{rel}`\n\n```text\n")
 
+    ret.append(f"## `{rel}`\n\n")
+
+    # --- Source Code ---
+    ret.append("### Source Code\n\n```python\n")
+    try:
+        ret.append(py.read_text())
+    except Exception as e:
+        ret.append(f"[ERROR reading file] {e}\n")
+    ret.append("\n```\n\n")
+
+    # --- Output ---
+    ret.append("### Output\n\n```text\n")
     try:
         r = subprocess.run(
             ["python", str(py)],
@@ -36,9 +47,10 @@ for py in sorted(ROOT.rglob("*.py")):
         ret.append(r.stdout or "")
         ret.append(r.stderr or "")
     except Exception as e:
-        ret.append(f"[ERROR] {e}\n")
+        ret.append(f"[ERROR executing] {e}\n")
 
-    ret.append("```\n\n")
+    ret.append("\n```\n\n")
+
 
 with open(OUT, "w") as f:
     f.writelines(ret)
