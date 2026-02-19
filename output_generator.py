@@ -54,35 +54,31 @@ for file in sorted(ROOT.rglob("*")):
     parent = file.parent.relative_to(ROOT)
     groups[parent].append(file)
 
-for parent in sorted(groups):
-    ret.append(f"# `{parent if str(parent).strip() != '.' else 'ROOT'}`\n\n")
+OUT_DIR = ROOT / "wiki_outputs"
+OUT_DIR.mkdir(exist_ok=True)
+
+for parent in groups:
+    print(parent)
+    name = str(parent) if str(parent).strip() != "." else "Root Directory"
+    page_name = name.replace("/", "-").replace("\\", "-")
+    out_file = OUT_DIR / f"{page_name}.md"
+
+    ret = [f"# Directory: `{parent}`\n\n"]
 
     for file in groups[parent]:
-        rel = file.relative_to(ROOT)
-        ret.append(f"## `{rel.name}`\n\n")
-
+        ret.append(f"## `{file.name}`\n\n")
         ret.append("### Source Code\n\n```")
         ret.append("python\n" if file.suffix == ".py" else "prolog\n")
-
-        try:
-            ret.append(file.read_text())
-        except Exception as e:
-            ret.append(f"[ERROR reading file] {e}\n")
-
+        ret.append(file.read_text())
         ret.append("\n```\n\n")
 
         ret.append("### Output\n\n```text\n")
-
-        try:
-            r = run_script(file)
-            if r:
-                ret.append(r.stdout or "")
-                ret.append(r.stderr or "")
-                ret.append(f"\n[Exit Code: {r.returncode}]\n")
-        except Exception as e:
-            ret.append(f"[ERROR executing] {e}\n")
-
+        r = run_script(file)
+        if r:
+            ret.append(r.stdout or "")
+            ret.append(r.stderr or "")
+            ret.append(f"\n[Exit Code: {r.returncode}]\n")
         ret.append("\n```\n\n")
 
-with open(OUT, "w") as f:
-    f.writelines(ret)
+    with open(out_file, "w") as f:
+        f.write("".join(ret))
