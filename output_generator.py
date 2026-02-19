@@ -10,47 +10,72 @@ EXCLUDE_DIRS = {
     ".venv",
     "venv",
     ".idea",
-    ",vscode"
+    ".vscode"
 }
+
+SUPPORTED_EXTENSIONS = {".py", ".pl"}
 
 def is_excluded(path: Path):
     return any(part in EXCLUDE_DIRS for part in path.parts)
 
-ret = ["# Script Outputs\n\n"]
-
-for py in sorted(ROOT.rglob("*.py")):
-    if py.name == "output_generator.py" or is_excluded(py):
-        continue
-
-    rel = py.relative_to(ROOT)
-
-    ret.append(f"## `{rel}`\n\n")
-
-    # --- Source Code ---
-    ret.append("### Source Code\n\n```python\n")
-    try:
-        ret.append(py.read_text())
-    except Exception as e:
-        ret.append(f"[ERROR reading file] {e}\n")
-    ret.append("\n```\n\n")
-
-    # --- Output ---
-    ret.append("### Output\n\n```text\n")
-    try:
-        r = subprocess.run(
-            ["python", str(py)],
-            cwd=py.parent,
+def run_script(path: Path):
+    if path.suffix == ".py":
+        return subprocess.run(
+            ["python", str(path)],
+            cwd=path.parent,
             capture_output=True,
             text=True,
             timeout=10,
         )
-        ret.append(r.stdout or "")
-        ret.append(r.stderr or "")
+
+    if path.suffix == ".pl":
+        return subprocess.run(
+            ["swipl", "-q", "-f", str(path), "-g", "main", "-t", "halt"],
+            cwd=path.parent,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+    return None
+
+
+ret = ["# Script Outputs\n\n"]
+
+for file in sorted(ROOT.rglob("*")):
+    if file.suffix not in SUPPORTED_EXTENSIONS:
+        continue
+
+    if file.name == "output_generator.py" or is_excluded(file):
+        continue
+
+    rel = file.relative_to(ROOT)
+    ret.append(f"## `{rel}`\n\n")
+
+    # Source Code
+    ret.append("### Source Code\n\n```")
+    ret.append("python\n" if file.suffix == ".py" else "prolog\n")
+
+    try:
+        ret.append(file.read_text())
+    except Exception as e:
+        ret.append(f"[ERROR reading file] {e}\n")
+
+    ret.append("\n```\n\n")
+
+    # Output
+    ret.append("### Output\n\n```text\n")
+
+    try:
+        r = run_script(file)
+        if r:
+            ret.append(r.stdout or "")
+            ret.append(r.stderr or "")
+            ret.append(f"\n[Exit Code: {r.returncode}]\n")
     except Exception as e:
         ret.append(f"[ERROR executing] {e}\n")
 
     ret.append("\n```\n\n")
-
 
 with open(OUT, "w") as f:
     f.writelines(ret)
