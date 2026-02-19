@@ -22,3 +22,6 @@ children(X,Y):- parent(Y,X).
 sibling(X,Z):- parent(Y,X),parent(Y,Z).
 brother(X,Z):- parent(Y,X),parent(Y,Z),male(X).
 
+main :-
+    findall(X, parent(X, _), L),
+    writeln(L).
