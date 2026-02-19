@@ -33,11 +33,11 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git checkout main
-          git pull origin main
+          git checkout master
+          git pull origin master
           git add OUTPUTS.md
           git commit -m "Auto-generate OUTPUTS.md for tag ${{ github.ref_name }}" || echo "No changes"
-          git push origin main
+          git push origin master
 
       - name: Push changes
         run: |
