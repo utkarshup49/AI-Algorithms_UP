@@ -1,6 +1,7 @@
 % facts
 easy(hardware).
 easy(graphics).
+student(mary).
 
 not_easy(logic).
 
@@ -12,11 +13,30 @@ lab(graphics).
 
 takes(mary, compiler).
 
-% rules
-takes(_, Y) :-
+
+takes(X, Y) :-
+    student(X),
     easy(Y),
     books_available(Y).
 
-takes(_, Y) :-
+takes(X, Y) :-
+    student(X),
     eight_credits(Y),
     lab(Y).
+    
+% Tests:
+% Does Mary take graphics?
+% takes(mary, graphics)
+% Output: true
+
+% Which course does Mary take?
+% takes(mary, C)
+% Output:
+% C = compiler
+% C = hardware
+% C = graphics
+
+% Who takes graphics?
+% takes(X, graphics)
+% Output:
+% X = mary
